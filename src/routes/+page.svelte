@@ -3,6 +3,6 @@
 </script>
 
 <main>
+	<img src="out2850.png" alt="out2850.png" id="img">
 	<LeafletMap/>
-	<img src="out74.png" alt="out74.png"/>
 </main>
