@@ -8,10 +8,9 @@
 
     let calcualting = true;
 
-    const videoFrameLength = 1972;
+    const videoFrameLength = 1753;
     const fps = 9;
     const timePerFrame = Math.ceil(1000/fps);
-    console.log('Time per frame: ', timePerFrame);
 
     onMount(async () => {
         if(browser) {
@@ -26,12 +25,12 @@
             const baseDist = 0.0002;
             let markers: any = [];
 
-            const drawImg = (pixels: Array<number>, imgWidth: number, imgHeight: number, step: number) => {
+            const drawImg = (pixels: Array<boolean>, imgWidth: number, imgHeight: number, step: number) => {
                 let lat = 51.5;
                 let lon = -0.09;
                 for(let j = 0; j < imgHeight; j += step) {
                     for(let i = 0; i < imgWidth; i += step) {
-                        if(pixels[i + j * imgWidth] === 0) {
+                        if(pixels[i + j * imgWidth] === false) {
                             marker = leaflet.marker([lat, lon]).addTo(map);
                             markers.push(marker);
                         }
@@ -40,7 +39,7 @@
                     lon = -0.09;
                     lat -= baseDist * step;
                 }
-                map.invalidateSize();
+                map.invalidateSize()
             }
 
             const convertToBinary = (pixels: Uint8ClampedArray) => {
@@ -53,9 +52,9 @@
                     const a = pixels[i + 3];
                     const y = 0.2989 * r + 0.5870 * g + 0.1140 * b;
                     if (y > 50) {
-                        convertedPixels.push(1);
+                        convertedPixels.push(true);
                     } else {
-                        convertedPixels.push(0);
+                        convertedPixels.push(false);
                     }
                 }
                 return convertedPixels;
@@ -86,24 +85,18 @@
             const imgW = (imgObj as HTMLImageElement)?.width;
             const imgH = (imgObj as HTMLImageElement)?.height;
 
-            let pixelData: Array<Array<number>> = [[]];
+            const step = 18;
+            calcualting = false;
+            let convertedPixels: Array<boolean> = convertToBinary(context?.getImageData(0, 0, imgW, imgH)?.data as Uint8ClampedArray);
             for(let i = 1; i < videoFrameLength + 1; i++) {
+                drawImg(convertedPixels, imgWidth, imgHeight, step);
+                const start = new Date().getTime();
                 let imgObj = document.getElementById(`a${i}`);
                 if (imgObj) {
                     context?.drawImage(imgObj as HTMLImageElement, 0, 0, imgW, imgH);
                 }
                 const imgPixels = context?.getImageData(0, 0, imgW, imgH);
-                const convertedPixels = convertToBinary(imgPixels?.data as Uint8ClampedArray);
-                pixelData.push(convertedPixels);
-            }
-
-            const step = 18;
-            calcualting = false;
-            for(let i = 1; i < videoFrameLength + 1; i++) {
-                const start = new Date().getTime();
-                let convertedPixels = pixelData[i - 1];
-                drawImg(convertedPixels, imgWidth, imgHeight, step);
-                convertedPixels = [];
+                convertedPixels = convertToBinary(imgPixels?.data as Uint8ClampedArray);
                 const end = new Date().getTime();
                 const diff = end - start;
                 if(diff < timePerFrame) {
