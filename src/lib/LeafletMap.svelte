@@ -8,16 +8,12 @@
 
     let calcualting = true;
 
-    const videoFrameLength = 1753;
-    const fps = 9;
+    const videoFrameLength = 3286;
+    const fps = 15;
     const timePerFrame = Math.ceil(1000/fps);
 
     onMount(async () => {
         if(browser) {
-            const markerIcon = await import('leaflet/dist/images/marker-icon.png');
-            const markerIcon2x = await import('leaflet/dist/images/marker-icon-2x.png');
-            const markerShadow = await import('leaflet/dist/images/marker-shadow.png');
-
             const leaflet = await import('leaflet');
 
             map = leaflet.map(mapElement).setView([51.47, -0.01], 13);
@@ -83,7 +79,7 @@
 
             // wait for images to load
             while(!document.getElementById(`a${videoFrameLength}`)) {
-                await new Promise(r => setTimeout(r, 250));
+                await new Promise(r => setTimeout(r, 200));
             }
             const canvas = document.getElementById('canvas') as HTMLCanvasElement;
             const imgObj = document.getElementById('a1');
@@ -94,25 +90,28 @@
             // show canvas
             document.body.appendChild(canvas);
             // set display to none
-            (imgObj as HTMLImageElement).style.display = 'none';
             const context = canvas.getContext('2d', { willReadFrequently: true });
             const imgW = (imgObj as HTMLImageElement)?.width;
             const imgH = (imgObj as HTMLImageElement)?.height;
 
             const step = 18;
-            calcualting = false;
+            let diff = 0;
+            let end = 0;
             let convertedPixels: Array<boolean> = convertToBinary(context?.getImageData(0, 0, imgW, imgH)?.data as Uint8ClampedArray);
+            // wait for loading to finish
+            await new Promise(r => setTimeout(r, 4000));
+            calcualting = false;
+            const audio = new Audio('audio.mp3');
+            audio.play();
             for(let i = 1; i < videoFrameLength + 1; i++) {
-                drawImg(convertedPixels, imgWidth, imgHeight, step);
                 const start = new Date().getTime();
+                drawImg(convertedPixels, imgWidth, imgHeight, step);
                 let imgObj = document.getElementById(`a${i}`);
                 if (imgObj) {
                     context?.drawImage(imgObj as HTMLImageElement, 0, 0, imgW, imgH);
                 }
                 const imgPixels = context?.getImageData(0, 0, imgW, imgH);
                 convertedPixels = convertToBinary(imgPixels?.data as Uint8ClampedArray);
-                const end = new Date().getTime();
-                const diff = end - start;
                 if(diff < timePerFrame) {
                     await new Promise(r => setTimeout(r, timePerFrame - diff));
                 }
@@ -120,6 +119,8 @@
                     console.log('Frame took ', diff, 'ms too long.');
                 }
                 removeMarkers();
+                end = new Date().getTime();
+                diff = end - start;
             }
         }
     });
