@@ -6,7 +6,12 @@
     let map: any;
     let marker: any;
 
-    const videoLength = 876;
+    let calcualting = true;
+
+    const videoFrameLength = 1972;
+    const fps = 9;
+    const timePerFrame = Math.ceil(1000/fps);
+    console.log('Time per frame: ', timePerFrame);
 
     onMount(async () => {
         if(browser) {
@@ -34,9 +39,8 @@
                     }
                     lon = -0.09;
                     lat -= baseDist * step;
-
                 }
-
+                map.invalidateSize();
             }
 
             const convertToBinary = (pixels: Uint8ClampedArray) => {
@@ -61,14 +65,15 @@
                 markers.forEach((marker: any) => {
                     map.removeLayer(marker);
                 });
+                markers = [];
             }
 
-            // wait for image to load
-            while(!document.getElementById(`a${videoLength}`)) {
-                await new Promise(r => setTimeout(r, 500));
+            // wait for images to load
+            while(!document.getElementById(`a${videoFrameLength}`)) {
+                await new Promise(r => setTimeout(r, 250));
             }
             const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-            const imgObj = document.getElementById('a100');
+            const imgObj = document.getElementById('a1');
             const imgWidth = (imgObj as HTMLImageElement)?.width;
             const imgHeight = (imgObj as HTMLImageElement)?.height;
             canvas.width = (imgObj as HTMLImageElement)?.width;
@@ -77,30 +82,38 @@
             document.body.appendChild(canvas);
             // set display to none
             (imgObj as HTMLImageElement).style.display = 'none';
-            const context = canvas.getContext('2d');
+            const context = canvas.getContext('2d', { willReadFrequently: true });
             const imgW = (imgObj as HTMLImageElement)?.width;
             const imgH = (imgObj as HTMLImageElement)?.height;
 
-            const step = 16;
-
-            for(let i = 1; i < videoLength + 1; i++) {
-                const start = new Date().getTime();
+            let pixelData: Array<Array<number>> = [[]];
+            for(let i = 1; i < videoFrameLength + 1; i++) {
                 let imgObj = document.getElementById(`a${i}`);
                 if (imgObj) {
                     context?.drawImage(imgObj as HTMLImageElement, 0, 0, imgW, imgH);
                 }
                 const imgPixels = context?.getImageData(0, 0, imgW, imgH);
                 const convertedPixels = convertToBinary(imgPixels?.data as Uint8ClampedArray);
+                pixelData.push(convertedPixels);
+            }
+
+            const step = 18;
+            calcualting = false;
+            for(let i = 1; i < videoFrameLength + 1; i++) {
+                const start = new Date().getTime();
+                let convertedPixels = pixelData[i - 1];
                 drawImg(convertedPixels, imgWidth, imgHeight, step);
-                // wait for 500ms to pass
+                convertedPixels = [];
                 const end = new Date().getTime();
                 const diff = end - start;
-                if(diff < 250) {
-                    await new Promise(r => setTimeout(r, 250 - diff));
+                if(diff < timePerFrame) {
+                    await new Promise(r => setTimeout(r, timePerFrame - diff));
+                }
+                else {
+                    console.log('Frame took ', diff, 'ms too long.');
                 }
                 removeMarkers();
             }
-            
         }
     });
 
@@ -110,15 +123,16 @@
             map.remove();
         }
     });
-
 </script>
 
 
 <main>
-    {#each Array.from({ length: 876 }, (_, i) => i + 1) as number}
+    {#each Array.from({ length: videoFrameLength }, (_, i) => i + 1) as number}
     <img src={`out${number}.png`} alt={`out${number}.png`} id={`a${number}`}/>
     {/each}
-
+    {#if calcualting}
+    <p>Calculating...</p>
+    {/if}
     <canvas id="canvas"></canvas>
     <div bind:this={mapElement}></div>
 </main>
@@ -127,6 +141,13 @@
     @import 'leaflet/dist/leaflet.css';
     main div {
         height: 99vh;
+    }
+
+    p {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
 
     img {
