@@ -147,7 +147,7 @@
 <style>
     @import 'leaflet/dist/leaflet.css';
     main div {
-        height: 99vh;
+        height: 100vh;
     }
 
     p {
@@ -155,6 +155,8 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+        color: red;
+        font-size: 2rem;
     }
 
     img {
