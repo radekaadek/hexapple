@@ -6,6 +6,8 @@
     let map: any;
     let marker: any;
 
+    const videoLength = 876;
+
     onMount(async () => {
         if(browser) {
             const leaflet = await import('leaflet');
@@ -62,8 +64,8 @@
             }
 
             // wait for image to load
-            while(!document.getElementById('a438')) {
-                await new Promise(r => setTimeout(r, 100));
+            while(!document.getElementById(`a${videoLength}`)) {
+                await new Promise(r => setTimeout(r, 500));
             }
             const canvas = document.getElementById('canvas') as HTMLCanvasElement;
             const imgObj = document.getElementById('a100');
@@ -79,15 +81,26 @@
             const imgW = (imgObj as HTMLImageElement)?.width;
             const imgH = (imgObj as HTMLImageElement)?.height;
 
-            
-            if (imgObj) {
-                context?.drawImage(imgObj as HTMLImageElement, 0, 0, imgW, imgH);
+            const step = 16;
+
+            for(let i = 1; i < videoLength + 1; i++) {
+                const start = new Date().getTime();
+                let imgObj = document.getElementById(`a${i}`);
+                if (imgObj) {
+                    context?.drawImage(imgObj as HTMLImageElement, 0, 0, imgW, imgH);
+                }
+                const imgPixels = context?.getImageData(0, 0, imgW, imgH);
+                const convertedPixels = convertToBinary(imgPixels?.data as Uint8ClampedArray);
+                drawImg(convertedPixels, imgWidth, imgHeight, step);
+                // wait for 500ms to pass
+                const end = new Date().getTime();
+                const diff = end - start;
+                if(diff < 250) {
+                    await new Promise(r => setTimeout(r, 250 - diff));
+                }
+                removeMarkers();
             }
-            const imgPixels = context?.getImageData(0, 0, imgW, imgH);
-            const convertedPixels = convertToBinary(imgPixels?.data as Uint8ClampedArray);
             
-            const step = 12;
-            drawImg(convertedPixels, imgWidth, imgHeight, step);
         }
     });
 
@@ -102,13 +115,27 @@
 
 
 <main>
+    {#each Array.from({ length: 876 }, (_, i) => i + 1) as number}
+    <img src={`out${number}.png`} alt={`out${number}.png`} id={`a${number}`}/>
+    {/each}
+
+    <canvas id="canvas"></canvas>
     <div bind:this={mapElement}></div>
 </main>
 
 <style>
     @import 'leaflet/dist/leaflet.css';
     main div {
-        height: 50rem;
+        height: 99vh;
     }
+
+    img {
+		/* hide */
+		display: none;
+	}
+
+	canvas {
+		display: none;
+	}
 
 </style>
