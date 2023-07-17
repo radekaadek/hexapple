@@ -14,6 +14,10 @@
 
     onMount(async () => {
         if(browser) {
+            const markerIcon = await import('leaflet/dist/images/marker-icon.png');
+            const markerIcon2x = await import('leaflet/dist/images/marker-icon-2x.png');
+            const markerShadow = await import('leaflet/dist/images/marker-shadow.png');
+
             const leaflet = await import('leaflet');
 
             map = leaflet.map(mapElement).setView([51.47, -0.01], 13);
@@ -31,7 +35,17 @@
                 for(let j = 0; j < imgHeight; j += step) {
                     for(let i = 0; i < imgWidth; i += step) {
                         if(pixels[i + j * imgWidth] === false) {
-                            marker = leaflet.marker([lat, lon]).addTo(map);
+                            marker = leaflet.marker([lat, lon], {
+                                icon: leaflet.icon({
+                                    iconUrl: 'marker-icon.png',
+                                    iconSize: [25, 41],
+                                    iconAnchor: [12, 41],
+                                    shadowUrl: 'marker-shadow.png',
+                                    shadowSize: [41, 41],
+                                    shadowAnchor: [12, 41],
+                                    popupAnchor: [1, -34]
+                                })
+                            }).addTo(map);
                             markers.push(marker);
                         }
                         lon += baseDist * step * metractorDerivative;
