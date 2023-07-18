@@ -16,7 +16,14 @@
         if(browser) {
             const leaflet = await import('leaflet');
 
-            map = leaflet.map(mapElement).setView([51.47, -0.01], 13);
+            // map = leaflet.map(mapElement).setView([51.47, -0.01], 13);
+            mapElement = document.querySelector('main div') as HTMLDivElement;
+            map = leaflet.map(mapElement)
+            // check if map is loaded
+            while(!map) {
+                await new Promise(r => setTimeout(r, 200));
+            }
+            map.setView([51.468, -0.01], 13);
             leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             }).addTo(map);
@@ -25,7 +32,7 @@
             const baseDist = 0.0002;
             let markers: any = [];
 
-            const drawImg = (pixels: Array<boolean>, imgWidth: number, imgHeight: number, step: number) => {
+            const drawImg = async (pixels: Array<boolean>, imgWidth: number, imgHeight: number, step: number) => {
                 let lat = 51.5;
                 let lon = -0.09;
                 for(let j = 0; j < imgHeight; j += step) {
@@ -43,13 +50,16 @@
                                 })
                             }).addTo(map);
                             markers.push(marker);
+                            // wait for marker to load
+                            while(!marker) {
+                                await new Promise(r => setTimeout(r, 1));
+                            }
                         }
                         lon += baseDist * step * metractorDerivative;
                     }
                     lon = -0.09;
                     lat -= baseDist * step;
                 }
-                map.invalidateSize()
             }
 
             const convertToBinary = (pixels: Uint8ClampedArray) => {
@@ -95,32 +105,29 @@
             const imgH = (imgObj as HTMLImageElement)?.height;
 
             const step = 18;
-            let diff = 0;
-            let end = 0;
+            let timeToWait = 0;
+            if (imgObj) {
+                context?.drawImage(imgObj as HTMLImageElement, 0, 0, imgW, imgH);
+            }
             let convertedPixels: Array<boolean> = convertToBinary(context?.getImageData(0, 0, imgW, imgH)?.data as Uint8ClampedArray);
+            drawImg(convertedPixels, imgWidth, imgHeight, step);
             // wait for loading to finish
-            await new Promise(r => setTimeout(r, 4000));
             calcualting = false;
-            const audio = new Audio('audio.mp3');
-            audio.play();
             for(let i = 1; i < videoFrameLength + 1; i++) {
+                if(timeToWait > 0) {
+                    await new Promise(r => setTimeout(r, timeToWait));
+                }
                 const start = new Date().getTime();
-                drawImg(convertedPixels, imgWidth, imgHeight, step);
+                removeMarkers();
                 let imgObj = document.getElementById(`a${i}`);
                 if (imgObj) {
                     context?.drawImage(imgObj as HTMLImageElement, 0, 0, imgW, imgH);
                 }
                 const imgPixels = context?.getImageData(0, 0, imgW, imgH);
-                convertedPixels = convertToBinary(imgPixels?.data as Uint8ClampedArray);
-                if(diff < timePerFrame) {
-                    await new Promise(r => setTimeout(r, timePerFrame - diff));
-                }
-                else {
-                    console.log('Frame took ', diff, 'ms too long.');
-                }
-                removeMarkers();
-                end = new Date().getTime();
-                diff = end - start;
+                const convertedPixels = convertToBinary(imgPixels?.data as Uint8ClampedArray);
+                drawImg(convertedPixels, imgWidth, imgHeight, step);
+                const end = new Date().getTime();
+                timeToWait = timePerFrame - (end - start);
             }
         }
     });
