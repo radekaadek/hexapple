@@ -50,10 +50,6 @@
                                 })
                             }).addTo(map);
                             markers.push(marker);
-                            // wait for marker to load
-                            while(!marker) {
-                                await new Promise(r => setTimeout(r, 1));
-                            }
                         }
                         lon += baseDist * step * metractorDerivative;
                     }
@@ -111,7 +107,10 @@
             }
             let convertedPixels: Array<boolean> = convertToBinary(context?.getImageData(0, 0, imgW, imgH)?.data as Uint8ClampedArray);
             drawImg(convertedPixels, imgWidth, imgHeight, step);
-            // wait for loading to finish
+            // wait for icon to load
+            for(let i = 0; i < 50; i++) { // this reliably makes the browser load everything
+                let e = document.querySelector('img[src="mareeker-icon.png"]')
+            }
             calcualting = false;
             for(let i = 1; i < videoFrameLength + 1; i++) {
                 if(timeToWait > 0) {
