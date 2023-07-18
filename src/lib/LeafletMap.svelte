@@ -108,7 +108,7 @@
             let convertedPixels: Array<boolean> = convertToBinary(context?.getImageData(0, 0, imgW, imgH)?.data as Uint8ClampedArray);
             drawImg(convertedPixels, imgWidth, imgHeight, step);
             // wait for icon to load
-            for(let i = 0; i < 50; i++) { // this reliably makes the browser load everything
+            for(let i = 0; i < 10; i++) { // this reliably makes the browser load everything
                 let e = document.querySelector('img[src="mareeker-icon.png"]')
             }
             calcualting = false;
