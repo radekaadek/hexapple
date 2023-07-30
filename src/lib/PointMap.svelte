@@ -3,7 +3,6 @@
     import { browser } from '$app/environment';
     import { convertToBinary, loadMap } from '$lib/utils';
 
-    let mapElement: HTMLDivElement;
     let map: any;
     let marker: any;
 
@@ -112,7 +111,8 @@
     {#if loading}
     <p>Downloading and calculating...</p>
     {/if}
-    <div bind:this={mapElement}></div>
+    <!-- set id to map -->
+    <div id="map"></div>
 </main>
 
 <style>

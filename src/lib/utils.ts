@@ -1,6 +1,6 @@
 export const loadMap = async () => {
     const leaflet = await import('leaflet');
-    const mapElement = document.querySelector('main div') as HTMLDivElement;
+    const mapElement = document.getElementById('map') as HTMLDivElement;
     const map = leaflet.map(mapElement)
     // check if map is loaded
     while(!map) {

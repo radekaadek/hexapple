@@ -12,7 +12,8 @@
 
 <main>
 	{#if mode === 'loading'}
-		<div class="msg">Choose the mode!</div>
+		<div class="title">Choose the mode!</div>
+		<div class="msg">WARNING!! The animation might load for some time but if it's too long try refreshing the page 😊</div>
 		<div class="points">
 			<button on:click={() => mode = 'hexagons'}>Hexagons</button>
 			<button on:click={() => mode = 'points'}>Points</button>
@@ -25,12 +26,17 @@
 </main>
 
 <style>
-	.msg {
-		margin-top: 5rem;
-		font-size: 3rem;
+	.title {
+		padding-top: 5rem;
+		font-size: 4rem;
 		text-align: center;
-		/* light purple */
 		color: #d033e5;
+	}
+	.msg {
+		padding-top: 2rem;
+		font-size: 2rem;
+		text-align: center;
+		color: #e53333;
 	}
 	.points {
 		/* at the center of the screen */
@@ -50,8 +56,12 @@
 		transition: background-color 0.3s;
 		margin: 7rem;
 	}
+	main {
+		background-color: rgb(212, 230, 237);
+		height: 100vh;
+	}
 
 	button:hover {
-		background-color: #2980b9;
+		background-color: rgb(58, 73, 204);
 	}
 </style>
