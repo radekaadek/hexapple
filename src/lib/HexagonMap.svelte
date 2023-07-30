@@ -79,7 +79,7 @@
     {#if loading}
     <p>Downloading and calculating...</p>
     {/if}
-    <div bind:this={mapElement}></div>
+    <div id="map"></div>
 </main>
 
 <style>
