@@ -1,12 +1,13 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { browser } from '$app/environment';
+    import { convertToBinary, loadMap } from '$lib/utils';
 
     let mapElement: HTMLDivElement;
     let map: any;
     let marker: any;
 
-    let calcualting = true;
+    let loading = true;
 
     const videoFrameLength = 3286;
     const fps = 15;
@@ -15,18 +16,7 @@
     onMount(async () => {
         if(browser) {
             const leaflet = await import('leaflet');
-
-            // map = leaflet.map(mapElement).setView([51.47, -0.01], 13);
-            mapElement = document.querySelector('main div') as HTMLDivElement;
-            map = leaflet.map(mapElement)
-            // check if map is loaded
-            while(!map) {
-                await new Promise(r => setTimeout(r, 200));
-            }
-            map.setView([51.468, -0.01], 13);
-            leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
+            map = await loadMap();
 
             const metractorDerivative = 1.6;
             const baseDist = 0.0002;
@@ -58,24 +48,6 @@
                 }
             }
 
-            const convertToBinary = (pixels: Uint8ClampedArray) => {
-                const convertedPixels = [];
-
-                for (let i = 0; i < pixels.length; i += 4) {
-                    const r = pixels[i];
-                    const g = pixels[i + 1];
-                    const b = pixels[i + 2];
-                    const a = pixels[i + 3];
-                    const y = 0.2989 * r + 0.5870 * g + 0.1140 * b;
-                    if (y > 50) {
-                        convertedPixels.push(true);
-                    } else {
-                        convertedPixels.push(false);
-                    }
-                }
-                return convertedPixels;
-            }
-
             const removeMarkers = () => {
                 markers.forEach((marker: any) => {
                     map.removeLayer(marker);
@@ -89,13 +61,9 @@
             }
             const canvas = document.getElementById('canvas') as HTMLCanvasElement;
             const imgObj = document.getElementById('a1');
-            const imgWidth = (imgObj as HTMLImageElement)?.width;
-            const imgHeight = (imgObj as HTMLImageElement)?.height;
             canvas.width = (imgObj as HTMLImageElement)?.width;
             canvas.height = (imgObj as HTMLImageElement)?.height;
-            // show canvas
             document.body.appendChild(canvas);
-            // set display to none
             const context = canvas.getContext('2d', { willReadFrequently: true });
             const imgW = (imgObj as HTMLImageElement)?.width;
             const imgH = (imgObj as HTMLImageElement)?.height;
@@ -106,12 +74,8 @@
                 context?.drawImage(imgObj as HTMLImageElement, 0, 0, imgW, imgH);
             }
             let convertedPixels: Array<boolean> = convertToBinary(context?.getImageData(0, 0, imgW, imgH)?.data as Uint8ClampedArray);
-            drawImg(convertedPixels, imgWidth, imgHeight, step);
-            // wait for icon to load
-            for(let i = 0; i < 10; i++) { // this reliably makes the browser load everything
-                let e = document.querySelector('img[src="mareeker-icon.png"]')
-            }
-            calcualting = false;
+            drawImg(convertedPixels, imgW, imgH, step);
+            loading = false;
             for(let i = 1; i < videoFrameLength + 1; i++) {
                 if(timeToWait > 0) {
                     await new Promise(r => setTimeout(r, timeToWait));
@@ -124,7 +88,7 @@
                 }
                 const imgPixels = context?.getImageData(0, 0, imgW, imgH);
                 const convertedPixels = convertToBinary(imgPixels?.data as Uint8ClampedArray);
-                drawImg(convertedPixels, imgWidth, imgHeight, step);
+                drawImg(convertedPixels, imgW, imgH, step);
                 const end = new Date().getTime();
                 timeToWait = timePerFrame - (end - start);
             }
@@ -144,10 +108,10 @@
     {#each Array.from({ length: videoFrameLength }, (_, i) => i + 1) as number}
     <img src={`out${number}.png`} alt={`out${number}.png`} id={`a${number}`}/>
     {/each}
-    {#if calcualting}
-    <p>Calculating...</p>
-    {/if}
     <canvas id="canvas"></canvas>
+    {#if loading}
+    <p>Downloading and calculating...</p>
+    {/if}
     <div bind:this={mapElement}></div>
 </main>
 
@@ -163,7 +127,7 @@
         left: 50%;
         transform: translate(-50%, -50%);
         color: red;
-        font-size: 2rem;
+        font-size: 3rem;
     }
 
     img {
