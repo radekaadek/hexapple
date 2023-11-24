@@ -2,15 +2,19 @@
     import { onMount, onDestroy } from 'svelte';
     import { browser } from '$app/environment';
     import { convertToBinary, loadMap } from '$lib/utils';
+	import type { Marker } from 'leaflet';
 
     let map: any;
     let marker: any;
 
     let loading = true;
 
-    const videoFrameLength = 3286;
-    const fps = 15;
+    const videoFrameLength = 6572;
+    const fps = 30;
     const timePerFrame = Math.ceil(1000/fps);
+    const step = 12;
+    // leaflet markers
+    let markerPlacements: Array<Array<Marker | null>> = [];
 
     onMount(async () => {
         if(browser) {
@@ -19,14 +23,14 @@
 
             const metractorDerivative = 1.6;
             const baseDist = 0.0002;
-            let markers: any = [];
 
             const drawImg = async (pixels: Array<boolean>, imgWidth: number, imgHeight: number, step: number) => {
                 let lat = 51.5;
                 let lon = -0.09;
                 for(let j = 0; j < imgHeight; j += step) {
                     for(let i = 0; i < imgWidth; i += step) {
-                        if(pixels[i + j * imgWidth] === false) {
+                        if(pixels[i + j * imgWidth] === true) {
+                            if(!markerPlacements[i][j]) {
                             marker = leaflet.marker([lat, lon], {
                                 icon: leaflet.icon({
                                     iconUrl: 'marker-icon.png',
@@ -38,7 +42,14 @@
                                     popupAnchor: [1, -34]
                                 })
                             }).addTo(map);
-                            markers.push(marker);
+                            markerPlacements[i][j] = marker;
+                            }
+                        }
+                        else {
+                            if(markerPlacements[i][j]) {
+                                map.removeLayer(markerPlacements[i][j]);
+                                markerPlacements[i][j] = null;
+                            }
                         }
                         lon += baseDist * step * metractorDerivative;
                     }
@@ -66,8 +77,13 @@
             const context = canvas.getContext('2d', { willReadFrequently: true });
             const imgW = (imgObj as HTMLImageElement)?.width;
             const imgH = (imgObj as HTMLImageElement)?.height;
+            for (let i = 0; i < imgW; i++) {
+                markerPlacements.push([]);
+                for (let j = 0; j < imgH; j++) {
+                    markerPlacements[i].push(null);
+                }
+            }
 
-            const step = 18;
             let timeToWait = 0;
             if (imgObj) {
                 context?.drawImage(imgObj as HTMLImageElement, 0, 0, imgW, imgH);
@@ -80,7 +96,7 @@
                     await new Promise(r => setTimeout(r, timeToWait));
                 }
                 const start = new Date().getTime();
-                removeMarkers();
+                // removeMarkers();
                 let imgObj = document.getElementById(`a${i}`);
                 if (imgObj) {
                     context?.drawImage(imgObj as HTMLImageElement, 0, 0, imgW, imgH);

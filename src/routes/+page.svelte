@@ -1,9 +1,19 @@
 <script lang="ts">
 	import HexagonMap from '$lib/HexagonMap.svelte';
 	import PointMap from '$lib/PointMap.svelte';
+	import { convertToBinary, loadMap } from '$lib/utils';
+	// import ffmpeg from 'ffmpeg.js/ffmpeg-mp4.js';
+	// import ffmpeg from 'js-ffmpeg';
 
 	type Mode = 'loading' | 'hexagons' | 'points';
 	let mode: Mode = 'loading';
+	let files: FileList;
+	let video: File;
+
+	$: if (files) {
+		video = files[0];
+		mode = 'points';
+	}
 </script>
 
 <svelte:head>
@@ -14,14 +24,13 @@
 	{#if mode === 'loading'}
 		<div class="title">Choose the mode!</div>
 		<div class="msg">WARNING!! The animation might load for some time but if it's too long try refreshing the page 😊</div>
+		<!-- video input -->
+		<input type="file" accept="video/*" bind:files>
 		<div class="points">
-			<button on:click={() => mode = 'hexagons'}>Hexagons</button>
 			<button on:click={() => mode = 'points'}>Points</button>
 		</div>
-	{:else if mode === 'hexagons'}
-		<HexagonMap/>
 	{:else if mode === 'points'}
-		<PointMap/>
+		<PointMap />
 	{/if}
 </main>
 

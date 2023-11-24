@@ -30,7 +30,7 @@ export const convertToBinary = (pixelValues: Uint8ClampedArray) => {
     const values = pixelstoRec601(pixelValues);
     const convertedPixels = Array<boolean>(pixelValues.length / 4);
     for (let i = 0; i < values.length; i++) {
-        convertedPixels[i] = values[i] > 50;
+        convertedPixels[i] = values[i] <= 50;
     }
     return convertedPixels;
 }
