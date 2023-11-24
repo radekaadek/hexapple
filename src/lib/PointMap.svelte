@@ -58,16 +58,11 @@
                 }
             }
 
-            const removeMarkers = () => {
-                markers.forEach((marker: any) => {
-                    map.removeLayer(marker);
-                });
-                markers = [];
-            }
-
             // wait for images to load
-            while(!document.getElementById(`a${videoFrameLength}`)) {
-                await new Promise(r => setTimeout(r, 200));
+            for(let i = 1; i < videoFrameLength + 1; i++) {
+                while(!document.getElementById(`a${i}`)) {
+                    await new Promise(r => setTimeout(r, 200));
+                }
             }
             const canvas = document.getElementById('canvas') as HTMLCanvasElement;
             const imgObj = document.getElementById('a1');
