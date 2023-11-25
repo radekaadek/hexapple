@@ -31,7 +31,10 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@diffusion-studio/ffmpeg-js": "^0.2.3",
+		"@ffmpeg/ffmpeg": "^0.12.7",
+		"ffmpeg.js": "^4.2.9003",
 		"h3-js": "^4.1.0",
-		"js-ffmpeg": "^0.0.38"
+		"scss": "^0.2.4"
 	}
 }

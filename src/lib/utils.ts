@@ -1,3 +1,5 @@
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+
 export const loadMap = async () => {
     const leaflet = await import('leaflet');
     const mapElement = document.getElementById('map') as HTMLDivElement;
@@ -34,3 +36,52 @@ export const convertToBinary = (pixelValues: Uint8ClampedArray) => {
     }
     return convertedPixels;
 }
+
+export async function toBlobURL(url: string, type: string) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return URL.createObjectURL(new Blob([blob], { type }));
+}
+
+export async function convertMp4BlobToImages(videoFile: Uint8Array, extension: string): Promise<Blob[]> {
+    console.log(extension)
+    const ffmpegRef = new FFmpeg();
+    // load ffmpeg
+    const ffmpeg = ffmpegRef;
+    ffmpeg.on('log', ({ message }) => {
+        console.log(message);
+    });
+    // toBlobURL is used to bypass CORS issue, urls with the same
+    // domain can be used directly.
+    console.log('loading ffmpeg')
+    await ffmpeg.load({
+        coreURL: await toBlobURL(`https://unpkg.com/@ffmpeg/core@0.12.4/dist/esm/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`ffmpeg-core.wasm`, 'application/wasm')
+    });
+
+    console.log('writing file')
+    // write the file to the ffmpeg memory
+    await ffmpeg.writeFile('video.' + extension, videoFile)
+
+    console.log('executing ffmpeg')
+    const returnExtension = 'png'
+    // run the ffmpeg command
+    await ffmpeg.exec([
+        '-i', 'video.' + extension,
+        '-vf', 'fps=30', '-vf', 'scale=1280:720',
+        'out%d.' + returnExtension
+    ])
+    // get the number of files that were created 
+
+    // read the files from the ffmpeg memory
+    const files: Blob[] = []
+    for (let i = 1; i <= 3000; i++) {
+        const file = await ffmpeg.readFile('out' + i + '.' + returnExtension)
+        const blob = new Blob([file], { type: 'image/' + returnExtension })
+        files.push(blob)
+    }
+    console.log('done reading files')
+    return files
+}
+
+

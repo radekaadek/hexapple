@@ -2,28 +2,25 @@
     import { onMount, onDestroy } from 'svelte';
     import { browser } from '$app/environment';
     import { convertToBinary, loadMap } from '$lib/utils';
-	import type { Marker } from 'leaflet';
+	import type { Map, Marker } from 'leaflet';
+    import { convertMp4BlobToImages } from '$lib/utils';
+    
 
-    let map: any;
-    let marker: any;
-
+    let map: Map;
+    let marker: Marker;
+    export let video: File;
     let loading = true;
 
-    const videoFrameLength = 6572;
     const fps = 30;
     const timePerFrame = Math.ceil(1000/fps);
-    const step = 12;
-    // leaflet markers
-    let markerPlacements: Array<Array<Marker | null>> = [];
+    const step = 10;
+    let videoFrameLength = 3000;
+        
 
     onMount(async () => {
         if(browser) {
             const leaflet = await import('leaflet');
-            map = await loadMap();
-
-            const metractorDerivative = 1.6;
-            const baseDist = 0.0002;
-
+            let markerPlacements: Array<Array<Marker | null>> = [];
             const drawImg = async (pixels: Array<boolean>, imgWidth: number, imgHeight: number, step: number) => {
                 let lat = 51.5;
                 let lon = -0.09;
@@ -47,7 +44,7 @@
                         }
                         else {
                             if(markerPlacements[i][j]) {
-                                map.removeLayer(markerPlacements[i][j]);
+                                map.removeLayer(markerPlacements[i][j] as Marker);
                                 markerPlacements[i][j] = null;
                             }
                         }
@@ -57,13 +54,44 @@
                     lat -= baseDist * step;
                 }
             }
+            
 
+
+
+            // calcualte video frame length using ffmpeg
+            const arrayBuffer = await video.arrayBuffer()
+            const uint8Array = new Uint8Array(arrayBuffer)
+            const videoExtension = video.name.split('.').pop();
+            if (!videoExtension) {
+                alert('Video extension not found');
+                throw new Error('Video extension not found');
+            }
+            const convertedBlobs = await convertMp4BlobToImages(uint8Array, videoExtension);
+            videoFrameLength = convertedBlobs.length;
+            // create img elements
+            console.log('Creating img elements...')
+            for(let i = 1; i < videoFrameLength + 1; i++) {
+                const imgElement = document.createElement('img');
+                imgElement.src = URL.createObjectURL(convertedBlobs[i - 1]);
+                imgElement.id = `a${i}`;
+                imgElement.hidden = true;
+                document.body.appendChild(imgElement);
+            }
+            
+            console.log('Loading Leaflet map...');
+            map = await loadMap();
+
+            const metractorDerivative = 1.6;
+            const baseDist = 0.0002;
+
+            console.log('Drawing images...');
             // wait for images to load
             for(let i = 1; i < videoFrameLength + 1; i++) {
                 while(!document.getElementById(`a${i}`)) {
                     await new Promise(r => setTimeout(r, 200));
                 }
             }
+            console.log('Images loaded.');
             const canvas = document.getElementById('canvas') as HTMLCanvasElement;
             const imgObj = document.getElementById('a1');
             canvas.width = (imgObj as HTMLImageElement)?.width;
@@ -72,20 +100,23 @@
             const context = canvas.getContext('2d', { willReadFrequently: true });
             const imgW = (imgObj as HTMLImageElement)?.width;
             const imgH = (imgObj as HTMLImageElement)?.height;
+            console.log('Creating marker placements...');
             for (let i = 0; i < imgW; i++) {
                 markerPlacements.push([]);
                 for (let j = 0; j < imgH; j++) {
                     markerPlacements[i].push(null);
                 }
             }
-
+            console.log('Drawing first image...');
             let timeToWait = 0;
             if (imgObj) {
                 context?.drawImage(imgObj as HTMLImageElement, 0, 0, imgW, imgH);
             }
             let convertedPixels: Array<boolean> = convertToBinary(context?.getImageData(0, 0, imgW, imgH)?.data as Uint8ClampedArray);
+            console.log('Drawing first image...')
             drawImg(convertedPixels, imgW, imgH, step);
             loading = false;
+            console.log('Drawing remaining images...')
             for(let i = 1; i < videoFrameLength + 1; i++) {
                 if(timeToWait > 0) {
                     await new Promise(r => setTimeout(r, timeToWait));
@@ -102,6 +133,9 @@
                 const end = new Date().getTime();
                 timeToWait = timePerFrame - (end - start);
             }
+            alert('Done!');
+            const emptyPixels = new Array<boolean>(imgW * imgH).fill(false);
+            drawImg(emptyPixels, imgW, imgH, step);
         }
     });
 
@@ -115,14 +149,15 @@
 
 
 <main>
-    {#each Array.from({ length: videoFrameLength }, (_, i) => i + 1) as number}
-    <img src={`out${number}.png`} alt={`out${number}.png`} id={`a${number}`}/>
-    {/each}
+    <!-- {#each Array.from({ length: videoFrameLength }, (_, i) => i + 1) as number}
+    <img src={`out${number}.bmp`} alt={`out${number}.bmp`} id={`a${number}`} hidden />
+    {/each} -->
     <canvas id="canvas"></canvas>
     {#if loading}
-    <p>Downloading and calculating...</p>
+    <div class="maincnt">
+      <p>Downloading and calculating...<p>
+    </div>
     {/if}
-    <!-- set id to map -->
     <div id="map"></div>
 </main>
 
@@ -132,7 +167,7 @@
         height: 100vh;
     }
 
-    p {
+    .maincnt {
         position: absolute;
         top: 50%;
         left: 50%;
@@ -140,11 +175,6 @@
         color: red;
         font-size: 3rem;
     }
-
-    img {
-		/* hide */
-		display: none;
-	}
 
 	canvas {
 		display: none;
