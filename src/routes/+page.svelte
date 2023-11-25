@@ -35,10 +35,10 @@
 		<div class="msg">WARNING!! The animation might load for some time but if it's too long try refreshing the page 😊</div>
 		<!-- <input type="file" accept="video/*" bind:files> -->
 		<label for="images" class="drop-container" id="dropcontainer">
-			<span class="drop-title">Drop files here</span>
+			<span class="drop-title">Drop file here</span>
 			or
 			<input type="file" id="images" accept="video/*" required bind:files>
-		  </label>
+		</label>
 		  
 		<div class="points">
 			<button on:click={start}>Start</button>
@@ -76,7 +76,7 @@
 		background-color: #3498db;
 		color: white;
 		border: none;
-		padding: 10px 20px;
+		padding: 10px 4rem;
 		font-size: 3rem;
 		cursor: pointer;
 		transition: background-color 0.3s;
@@ -135,6 +135,11 @@
 		main {
 			padding: 0 1rem;
 		}
+	}
+	input[type="file"] {
+		height: 100%;
+		width: 100%;
+		cursor: pointer;
 	}
 
 </style>
