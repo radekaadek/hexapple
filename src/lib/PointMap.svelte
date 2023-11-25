@@ -89,7 +89,7 @@
 				imgElement.hidden = true;
 				document.body.appendChild(imgElement);
 			}
-
+			loading = false;
 			console.log('Loading Leaflet map...');
 			map = await loadMap();
 
@@ -179,7 +179,7 @@
 	<canvas id="canvas" />
 	{#if loading}
 		<div class="maincnt">
-			<p>Downloading and calculating...</p>
+			<p>Calculating...</p>
 			<p />
 		</div>
 		<div class="progress">

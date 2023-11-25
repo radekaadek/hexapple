@@ -33,6 +33,7 @@
 	{#if mode === 'loading'}
 		<div class="title">Upload a video and press Start!</div>
 		<div class="msg">WARNING!! The animation might load for some time but if it's too long try refreshing the page 😊</div>
+		<div class="msg">It works on chromuim browsers and only sometimes on Firefox 😔</div>
 		<!-- <input type="file" accept="video/*" bind:files> -->
 		<label for="images" class="drop-container" id="dropcontainer">
 			<span class="drop-title">Drop file here</span>
