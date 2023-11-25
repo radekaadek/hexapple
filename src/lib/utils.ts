@@ -68,7 +68,7 @@ export async function convertMp4BlobToImages(videoFile: Uint8Array, extension: s
     // run the ffmpeg command
     await ffmpeg.exec([
         '-i', 'video.' + extension,
-        '-vf', 'fps=30', '-vf', 'scale=1280:720',
+        '-vf', 'fps=30', '-vf', 'scale=480:360',
         'out%d.' + returnExtension
     ])
     // get the number of files that were created 
