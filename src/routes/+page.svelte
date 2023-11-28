@@ -1,15 +1,18 @@
 <script lang="ts">
 	import PointMap from '$lib/PointMap.svelte';
+	import { icons } from '$lib/utils.svelte';
 
 	type Mode = 'loading' | 'points';
 	let mode: Mode = 'loading';
 	let files: FileList;
 	let video: File;
 	let uploadError: string = '';
+	const items = icons.concat('marker-shadow');
 
 	$: if (files) {
 		video = files[0];
 	}
+
 
 	const start = () => {
 		// check if video is valid
@@ -23,6 +26,7 @@
 		}
 		mode = 'points';
 	}
+
 </script>
 
 <svelte:head>
@@ -33,8 +37,7 @@
 	{#if mode === 'loading'}
 		<div class="title">Upload a video and press Start!</div>
 		<div class="msg">WARNING!! The animation might load for some time but if it's too long try refreshing the page 😊</div>
-		<div class="msg">It works on chromuim browsers and only sometimes on Firefox 😔</div>
-		<!-- <input type="file" accept="video/*" bind:files> -->
+		<div class="msg">It works on V8 browsers and only sometimes on Firefox 😔</div>
 		<label for="images" class="drop-container" id="dropcontainer">
 			<span class="drop-title">Drop file here</span>
 			or
@@ -50,9 +53,9 @@
 	{:else if mode === 'points'}
 		<PointMap {video} />
 	{/if}
-	<!-- cheeky trick to load icons -->
-	<img src="marker-icon.png" alt="" style="display: none;">
-	<img src="marker-shadow.png" alt="" style="display: none;">
+	{#each items as item}
+		<img src={item + '.png'} alt={item} style="display: none;" />
+	{/each}
 </main>
 
 <style>

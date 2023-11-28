@@ -3,6 +3,12 @@
     import { FFmpeg } from '@ffmpeg/ffmpeg';
 	import { writable } from 'svelte/store';
 
+    export let icons: string[] = [
+        'marker-icon',
+        'red-marker-icon',
+        'black-marker-icon',
+        'green-marker-icon'
+    ];
     export let progressValue = writable(0);
 
     export const loadMap = async () => {
@@ -59,8 +65,6 @@
         ffmpeg.on('progress', ({ progress: p }) => {
             progressValue.set(p);
         });
-        // toBlobURL is used to bypass CORS issue, urls with the same
-        // domain can be used directly.
         console.log('loading ffmpeg')
         await ffmpeg.load({
             coreURL: await toBlobURL(`https://unpkg.com/@ffmpeg/core@0.12.4/dist/esm/ffmpeg-core.js`, 'text/javascript'),
@@ -83,7 +87,18 @@
 
         // read the files from the ffmpeg memory
         const files: Blob[] = []
-        for (let i = 1; i <= 3000; i++) {
+        // get the number of files that were created
+        let numFiles = 1
+        for(;true; numFiles++) {
+            try {
+                await ffmpeg.readFile('out' + numFiles + '.' + returnExtension)
+            } catch (e) {
+                break
+            }
+        }
+        numFiles--
+        console.log('Number of files: ' + numFiles)
+        for (let i = 1; i <= numFiles; i++) {
             const file = await ffmpeg.readFile('out' + i + '.' + returnExtension)
             const blob = new Blob([file], { type: 'image/' + returnExtension })
             files.push(blob)

@@ -5,25 +5,22 @@
 	import type { Map, Marker } from 'leaflet';
 	import { convertMp4BlobToImages } from '$lib/utils.svelte';
 	import { progressValue } from '$lib/utils.svelte';
+	import { icons } from '$lib/utils.svelte';
 
 	let map: Map;
 	let marker: Marker;
 	export let video: File;
 	let loading = true;
-	const icons = [
-		'marker-icon.png',
-		'red-marker-icon.png',
-		'black-marker-icon.png',
-		'green-marker-icon.png'
-	];
 	let currentIcon = icons[0];
+	let videoFrameLength = 0;
 
 	const baseLat = 51.5;
-	const baseLonDiff = -0.09;
+	const baseLon = -0.09;
 	const fps = 30;
 	const timePerFrame = Math.ceil(1000 / fps);
 	const step = 10;
-	let videoFrameLength = 3000;
+	const tajemnica = 1.6;
+	const baseDist = 0.002;
 
 	onMount(async () => {
 		if (browser) {
@@ -35,9 +32,9 @@
 				imgWidth: number,
 				imgHeight: number,
 				step: number
-			) => {
+				) => {
 				let lat = baseLat;
-				let lon = baseLonDiff;
+				let lon = baseLon;
 				for (let j = 0; j < imgHeight; j += step) {
 					for (let i = 0; i < imgWidth; i += step) {
 						if (pixels[i + j * imgWidth] === true) {
@@ -45,7 +42,7 @@
 								marker = leaflet
 									.marker([lat, lon], {
 										icon: leaflet.icon({
-											iconUrl: currentIcon,
+											iconUrl: currentIcon + '.png',
 											iconSize: [25, 41],
 											iconAnchor: [12, 41],
 											shadowUrl: 'marker-shadow.png',
@@ -63,10 +60,10 @@
 								markerPlacements[i][j] = null;
 							}
 						}
-						lon += baseDist * step * metractorDerivative;
+						lon += baseDist * tajemnica;
 					}
-					lon = baseLonDiff;
-					lat -= baseDist * step;
+					lon = baseLon;
+					lat -= baseDist;
 				}
 			};
 
@@ -80,6 +77,7 @@
 			}
 			const convertedBlobs = await convertMp4BlobToImages(uint8Array, videoExtension);
 			videoFrameLength = convertedBlobs.length;
+			console.log('Video frame length: ' + videoFrameLength)
 			// create img elements
 			console.log('Creating img elements...');
 			for (let i = 1; i < videoFrameLength + 1; i++) {
@@ -92,9 +90,6 @@
 			loading = false;
 			console.log('Loading Leaflet map...');
 			map = await loadMap();
-
-			const metractorDerivative = 1.6;
-			const baseDist = 0.0002;
 
 			console.log('Drawing images...');
 			// wait for images to load
@@ -115,10 +110,10 @@
 			// draw a polygon around the drawing area
 			const polygon = leaflet
 				.polygon([
-					[baseLat, baseLonDiff],
-					[baseLat, baseLonDiff + baseDist * imgW * metractorDerivative],
-					[baseLat - baseDist * imgH, baseLonDiff + baseDist * imgW * metractorDerivative],
-					[baseLat - baseDist * imgH, baseLonDiff]
+					[baseLat, baseLon],
+					[baseLat, baseLon + baseDist * tajemnica * Math.floor(imgW / step)],
+					[baseLat - baseDist * Math.floor(imgH / step), baseLon + baseDist * tajemnica * Math.floor(imgW / step)],
+					[baseLat - baseDist * Math.floor(imgH / step), baseLon]
 				])
 				.addTo(map);
 			console.log('Creating marker placements...');
@@ -144,7 +139,7 @@
 				if (timeToWait > 0) {
 					await new Promise((r) => setTimeout(r, timeToWait));
 				}
-				const start = new Date().getTime();
+				const start = performance.now();
 				// removeMarkers();
 				let imgObj = document.getElementById(`a${i}`);
 				if (imgObj) {
@@ -153,7 +148,7 @@
 				const imgPixels = context?.getImageData(0, 0, imgW, imgH);
 				const convertedPixels = convertToBinary(imgPixels?.data as Uint8ClampedArray);
 				drawImg(convertedPixels, imgW, imgH, step);
-				const end = new Date().getTime();
+				const end = performance.now();
 				timeToWait = timePerFrame - (end - start);
 			}
 			alert('Done!');
@@ -173,9 +168,6 @@
 </script>
 
 <main>
-	<!-- {#each Array.from({ length: videoFrameLength }, (_, i) => i + 1) as number}
-    <img src={`out${number}.bmp`} alt={`out${number}.bmp`} id={`a${number}`} hidden />
-    {/each} -->
 	<canvas id="canvas" />
 	{#if loading}
 		<div class="maincnt">
@@ -193,7 +185,7 @@
 				<div class="btns">
 					{#each icons as icon}
 						<button on:mousedown={() => (currentIcon = icon)}
-							><img src={icon} alt={icon} class="drop" /></button
+							><img src={icon + '.png'} alt={icon} class="drop" /></button
 						>
 					{/each}
 				</div>
