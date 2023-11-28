@@ -2,7 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import { convertToBinary, loadMap } from '$lib/utils.svelte';
-	import type { Map, Marker } from 'leaflet';
+	import type { LeafletKeyboardEvent, Map, Marker, Polygon } from 'leaflet';
 	import { convertMp4BlobToImages } from '$lib/utils.svelte';
 	import { progressValue } from '$lib/utils.svelte';
 	import { icons } from '$lib/utils.svelte';
@@ -13,6 +13,19 @@
 	let loading = true;
 	let currentIcon = icons[0];
 	let videoFrameLength = 0;
+	let polygonOnMap = false;
+
+	const togglePolygon = () => {
+		if (polygonOnMap) {
+			polygon.remove();
+			polygonOnMap = false;
+		} else {
+			polygon.addTo(map);
+			polygonOnMap = true;
+		}
+	};
+	
+	let polygon: Polygon;
 
 	const baseLat = 51.5;
 	const baseLon = -0.09;
@@ -25,7 +38,6 @@
 	onMount(async () => {
 		if (browser) {
 			const leaflet = await import('leaflet');
-			// loading = false;
 			let markerPlacements: Array<Array<Marker | null>> = [];
 			const drawImg = async (
 				pixels: Array<boolean>,
@@ -108,7 +120,7 @@
 			const imgW = (imgObj as HTMLImageElement)?.width;
 			const imgH = (imgObj as HTMLImageElement)?.height;
 			// draw a polygon around the drawing area
-			const polygon = leaflet
+			polygon = leaflet
 				.polygon([
 					[baseLat, baseLon],
 					[baseLat, baseLon + baseDist * tajemnica * Math.floor(imgW / step)],
@@ -116,6 +128,7 @@
 					[baseLat - baseDist * Math.floor(imgH / step), baseLon]
 				])
 				.addTo(map);
+			polygonOnMap = true;
 			console.log('Creating marker placements...');
 			for (let i = 0; i < imgW; i++) {
 				markerPlacements.push([]);
@@ -185,11 +198,16 @@
 				<div class="btns">
 					{#each icons as icon}
 						<button on:mousedown={() => (currentIcon = icon)}
-							><img src={icon + '.png'} alt={icon} class="drop" /></button
-						>
+							><img src={icon + '.png'} alt={icon} class="drop" />
+						</button>
 					{/each}
 				</div>
 			</div>
+		</div>
+		<!-- button for turning on/off the bounding polygon -->
+		<div class="polygon">
+			<div class="dropPoly">Bounding polygon</div>
+			<button on:mousedown={() => (togglePolygon())} class="toggleButton">Toggle</button>
 		</div>
 	{/if}
 	<div id="map" />
@@ -240,5 +258,33 @@
 		position: relative;
 		background-color: #e04542;
 		width: var(--progress);
+	}
+
+	.polygon {
+		/* set 2rem under the dropdown */
+		position: absolute;
+		top: 40vh;
+		left: 1vw;
+		z-index: 1000;
+		background-color: rgb(229, 233, 235);
+		display: flex;
+		flex-direction: column;
+		height: 5rem;
+	}
+
+	.dropPoly {
+		font-size: 1rem;
+		height: 2rem;
+		padding: 0.2rem;
+	}
+
+	.toggleButton {
+		background-color: #3498db;
+		color: white;
+		border: none;
+		font-size: 2rem;
+		cursor: pointer;
+		transition: background-color 0.3s;
+		padding: 0.5rem;
 	}
 </style>
