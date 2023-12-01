@@ -2,8 +2,8 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import { convertToBinary, loadMap } from '$lib/utils.svelte';
-	import type { LeafletKeyboardEvent, Map, Marker, Polygon } from 'leaflet';
-	import { convertMp4BlobToImages } from '$lib/utils.svelte';
+	import type { Map, Marker, Polygon } from 'leaflet';
+	import { videoBlobToImageBlob } from '$lib/utils.svelte';
 	import { progressValue } from '$lib/utils.svelte';
 	import { icons } from '$lib/utils.svelte';
 
@@ -24,7 +24,14 @@
 			polygonOnMap = true;
 		}
 	};
-	
+
+	const fatalError = (msg: string) => {
+		alert(msg);
+		// go back to root
+		window.location.href = '/';
+		throw new Error(msg);
+	};
+
 	let polygon: Polygon;
 
 	const baseLat = 51.5;
@@ -44,7 +51,7 @@
 				imgWidth: number,
 				imgHeight: number,
 				step: number
-				) => {
+			) => {
 				let lat = baseLat;
 				let lon = baseLon;
 				for (let j = 0; j < imgHeight; j += step) {
@@ -84,13 +91,15 @@
 			const uint8Array = new Uint8Array(arrayBuffer);
 			const videoExtension = video.name.split('.').pop();
 			if (!videoExtension) {
-				alert('Video extension not found');
-				throw new Error('Video extension not found');
+				fatalError('Invalid video extension.');
 			}
-			const convertedBlobs = await convertMp4BlobToImages(uint8Array, videoExtension);
+			const convertedBlobs = await videoBlobToImageBlob(uint8Array, videoExtension as string);
 			videoFrameLength = convertedBlobs.length;
-			console.log('Video frame length: ' + videoFrameLength)
-			// create img elements
+			// check if videoFrameLength is > 0
+			if (videoFrameLength === 0) {
+				fatalError('Invalid video.');
+			}
+			console.log('Video frame length: ' + videoFrameLength);
 			console.log('Creating img elements...');
 			for (let i = 1; i < videoFrameLength + 1; i++) {
 				const imgElement = document.createElement('img');
@@ -124,7 +133,10 @@
 				.polygon([
 					[baseLat, baseLon],
 					[baseLat, baseLon + baseDist * tajemnica * Math.floor(imgW / step)],
-					[baseLat - baseDist * Math.floor(imgH / step), baseLon + baseDist * tajemnica * Math.floor(imgW / step)],
+					[
+						baseLat - baseDist * Math.floor(imgH / step),
+						baseLon + baseDist * tajemnica * Math.floor(imgW / step)
+					],
 					[baseLat - baseDist * Math.floor(imgH / step), baseLon]
 				])
 				.addTo(map);
@@ -207,7 +219,7 @@
 		<!-- button for turning on/off the bounding polygon -->
 		<div class="polygon">
 			<div class="dropPoly">Bounding polygon</div>
-			<button on:mousedown={() => (togglePolygon())} class="toggleButton">Toggle</button>
+			<button on:mousedown={() => togglePolygon()} class="toggleButton">Toggle</button>
 		</div>
 	{/if}
 	<div id="map" />

@@ -13,15 +13,29 @@
 		video = files[0];
 	}
 
+	const videoError = (msg: string) => {
+		uploadError = msg;
+		// change it to '' after 3 seconds
+		setTimeout(() => {
+			uploadError = '';
+		}, 3000);
+	}
 
 	const start = () => {
 		// check if video is valid
 		if (!video) {
-			uploadError = 'Please upload a video 🤗';
-			// change it to '' after 3 seconds
-			setTimeout(() => {
-				uploadError = '';
-			}, 3000);
+			videoError('Please upload a valid video 🤗');
+			return
+		}
+		const videoExtensions = ['mp4', 'webm', 'ogg'];
+		const videoExt = video.name.split('.').pop();
+		if (!videoExt === undefined) {
+			videoError('Please upload a valid video 🤗');
+			return;
+		}
+		
+		if (!videoExtensions.includes(videoExt as string)) {
+			videoError('Please upload a valid video 🤗');
 			return;
 		}
 		mode = 'points';
@@ -35,9 +49,10 @@
 
 <main>
 	{#if mode === 'loading'}
+	<div class="loading">
 		<div class="title">Upload a video and press Start!</div>
 		<div class="msg">WARNING!! The animation might load for some time but if it's too long try refreshing the page 😊</div>
-		<div class="msg">It works on V8 browsers and only sometimes on Firefox 😔</div>
+		<div class="msg">It works only on V8 browsers 😔</div>
 		<label for="images" class="drop-container" id="dropcontainer">
 			<span class="drop-title">Drop file here</span>
 			or
@@ -47,9 +62,10 @@
 		<div class="points">
 			<button on:click={start}>Start</button>
 		</div>
-		{#if uploadError}
-			<div class="msg">{uploadError}</div>
-		{/if}
+	</div>
+	{#if uploadError}
+		<div class="msg">{uploadError}</div>
+	{/if}
 	{:else if mode === 'points'}
 		<PointMap {video} />
 	{/if}
@@ -73,8 +89,10 @@
 		color: #e53333;
 	}
 	.points {
-		display: flex;
 		justify-content: center;
+		align-items: center;
+		display:flex;
+		height: 100%;
 	}
 	button {
 		background-color: #3498db;
@@ -84,11 +102,13 @@
 		font-size: 3rem;
 		cursor: pointer;
 		transition: background-color 0.3s;
-		margin: 7rem;
+		margin-top: 3rem;
+		margin-bottom: 3rem;
 	}
 	main {
 		background-color: rgb(212, 230, 237);
-		height: 100vh;
+		background-size: cover;
+		height: max(100%, 100vh);
 	}
 	/* set height on mobile */
 	@media (max-width: 600px) {

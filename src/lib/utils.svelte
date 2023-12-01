@@ -54,11 +54,9 @@
         return URL.createObjectURL(new Blob([blob], { type }));
     }
 
-    export async function convertMp4BlobToImages(videoFile: Uint8Array, extension: string): Promise<Blob[]> {
-        // import progress value
-        const ffmpegRef = new FFmpeg();
+    export async function videoBlobToImageBlob(videoFile: Uint8Array, extension: string): Promise<Blob[]> {
         // load ffmpeg
-        const ffmpeg = ffmpegRef;
+        const ffmpeg = new FFmpeg();
         ffmpeg.on('log', ({ message }) => {
             console.log(message);
         });
@@ -66,37 +64,48 @@
             progressValue.set(p);
         });
         console.log('loading ffmpeg')
-        await ffmpeg.load({
+        const loaderr = await ffmpeg.load({
             coreURL: await toBlobURL(`https://unpkg.com/@ffmpeg/core@0.12.4/dist/esm/ffmpeg-core.js`, 'text/javascript'),
             wasmURL: await toBlobURL(`ffmpeg-core.wasm`, 'application/wasm')
         });
+		if (!loaderr) {
+			return []
+		}
 
         console.log('writing file')
         // write the file to the ffmpeg memory
-        await ffmpeg.writeFile('video.' + extension, videoFile)
-
+        const writeerr = await ffmpeg.writeFile('video.' + extension, videoFile)
+		if (!writeerr) {
+			return []
+		}
         console.log('executing ffmpeg')
         const returnExtension = 'png'
         // run the ffmpeg command
-        await ffmpeg.exec([
+        const execerr = await ffmpeg.exec([
             '-i', 'video.' + extension,
             '-vf', 'fps=30', '-vf', 'scale=480:360',
             'out%d.' + returnExtension
         ])
+		if (execerr !== 0) {
+			return []
+		}
         // get the number of files that were created 
 
         // read the files from the ffmpeg memory
         const files: Blob[] = []
         // get the number of files that were created
-        let numFiles = 1
-        for(;true; numFiles++) {
+        let numFiles = 0
+        for(let i = 1; true ; i++) {
             try {
                 await ffmpeg.readFile('out' + numFiles + '.' + returnExtension)
+				numFiles++
             } catch (e) {
                 break
             }
         }
-        numFiles--
+		if (numFiles <= 0) {
+			return []
+		}
         console.log('Number of files: ' + numFiles)
         for (let i = 1; i <= numFiles; i++) {
             const file = await ffmpeg.readFile('out' + i + '.' + returnExtension)
