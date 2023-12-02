@@ -94,15 +94,15 @@
         // read the files from the ffmpeg memory
         const files: Blob[] = []
         // get the number of files that were created
-        let numFiles = 0
-        for(let i = 1; true ; i++) {
+        let numFiles = 1
+        for(;true; numFiles++) {
             try {
                 await ffmpeg.readFile('out' + numFiles + '.' + returnExtension)
-				numFiles++
             } catch (e) {
                 break
             }
         }
+        numFiles--
 		if (numFiles <= 0) {
 			return []
 		}
