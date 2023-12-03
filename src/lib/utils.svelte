@@ -95,12 +95,13 @@
         const files: Blob[] = []
         // get the number of files that were created
         let numFiles = 1
-        for(;true; numFiles++) {
+        while(true) {
             try {
                 await ffmpeg.readFile('out' + numFiles + '.' + returnExtension)
             } catch (e) {
                 break
             }
+            numFiles++
         }
         numFiles--
 		if (numFiles <= 0) {
