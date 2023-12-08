@@ -114,7 +114,7 @@
             const blob = new Blob([file], { type: 'image/' + returnExtension })
             files.push(blob)
             // add 10% to the progress bar
-            progressValue.set(progressBase + (progressBase - 1) * i / numFiles)
+            progressValue.set(progressBase + (1 - progressBase) * i / numFiles)
         }
         console.log('done reading files')
         return files
