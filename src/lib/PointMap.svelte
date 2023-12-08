@@ -193,7 +193,8 @@
 </script>
 
 <main>
-	<canvas id="canvas" />
+	<!-- hide canvas -->
+	<canvas id="canvas" hidden />
 	{#if loading}
 		<div class="maincnt">
 			<p>Calculating...</p>
@@ -202,6 +203,7 @@
 		<div class="progress">
 			<div class="progress-bar-red" style="--progress: {$progressValue * 100}%" />
 		</div>
+		<div class="progress-value">{Math.round($progressValue * 100)}%</div>
 	{:else}
 		<!-- popdown menu for choosing icons -->
 		<div class="dropdown">
@@ -239,7 +241,12 @@
 		color: red;
 		font-size: 3rem;
 	}
-
+	.progress-value {
+		text-align: center;
+		padding-top: 15rem;
+		font-size: 3rem;
+		color: red;
+	}
 	canvas {
 		display: none;
 	}
