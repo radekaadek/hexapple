@@ -60,8 +60,9 @@
         ffmpeg.on('log', ({ message }) => {
             console.log(message);
         });
+        const progressBase = 0.9;
         ffmpeg.on('progress', ({ progress: p }) => {
-            progressValue.set(p * 0.9);
+            progressValue.set(p * progressBase);
         });
         console.log('loading ffmpeg')
         const loaderr = await ffmpeg.load({
@@ -113,7 +114,7 @@
             const blob = new Blob([file], { type: 'image/' + returnExtension })
             files.push(blob)
             // add 10% to the progress bar
-            progressValue.set(0.9 + 0.1 * i / numFiles)
+            progressValue.set(progressBase + (progressBase - 1) * i / numFiles)
         }
         console.log('done reading files')
         return files
