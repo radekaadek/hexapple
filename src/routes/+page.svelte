@@ -51,7 +51,7 @@
 	{#if mode === 'loading'}
 	<div class="loading">
 		<div class="title">Upload a video and press Start!</div>
-		<div class="msg">WARNING!! The animation might load for some time but if it's too long try refreshing the page 😊</div>
+		<div class="msg">WARNING!! The animation might load for some time 😊</div>
 		<div class="msg">It works only on V8 browsers 😔</div>
 		<label for="images" class="drop-container" id="dropcontainer">
 			<span class="drop-title">Drop file here</span>
