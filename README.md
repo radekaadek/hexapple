@@ -23,3 +23,4 @@ npm run dev
 ```
 
 ## Example
+![Example img](./static/image.png)
