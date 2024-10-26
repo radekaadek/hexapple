@@ -52,7 +52,7 @@
 	<div class="loading">
 		<div class="title">Upload a video and press Start!</div>
 		<div class="msg">WARNING!! The animation might load for some time 😊</div>
-		<div class="msg">It works only on V8 browsers 😔</div>
+		<div class="msg2">Because of browser limitations, videos are strongly encouraged to be short, up to 30 seconds. The animation works only on V8 browsers, such as Chrome, Opera and Brave 😔</div>
 		<label for="images" class="drop-container" id="dropcontainer">
 			<span class="drop-title">Drop file here</span>
 			or
@@ -88,6 +88,14 @@
 		text-align: center;
 		color: #e53333;
 	}
+  .msg2 {
+		padding-top: 2rem;
+		padding-bottom: 2rem;
+		font-size: 2rem;
+		text-align: center;
+		color: #e53333;
+    margin: 0 12.5%;
+  }
 	.points {
 		justify-content: center;
 		align-items: center;
